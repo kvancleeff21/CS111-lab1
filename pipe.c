@@ -1,80 +1,68 @@
-#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <errno.h>
 
 int main(int argc, char *argv[]) {
-    if (argc < 2) {
-        perror("Invalid argument");
-        return EINVAL;
+    if (argc < 3) {
+        fprintf(stderr, "Usage: %s program1 program2 [program3 ...]\n", argv[0]);
+        exit(EXIT_FAILURE);
     }
 
-    int num_cmds = argc - 1;
-    int pipes[num_cmds - 1][2];
+    int num_programs = argc - 1;
+    int pipes[num_programs - 1][2];
 
-    for (int i = 0; i < num_cmds - 1; i++) {
+    // Create pipes
+    for (int i = 0; i < num_programs - 1; i++) {
         if (pipe(pipes[i]) == -1) {
-            perror("Pipe creation failed");
-            return errno;
+            perror("pipe");
+            exit(EXIT_FAILURE);
         }
     }
 
-    for (int i = 0; i < num_cmds; i++) {
-        pid_t pid = fork();
+    for (int i = 0; i < num_programs; i++) {
+        pid_t child_pid = fork();
 
-        if (pid == -1) {
-            perror("Fork failed");
-            return errno;
+        if (child_pid == -1) {
+            perror("fork");
+            exit(EXIT_FAILURE);
         }
 
-        if (pid == 0) {
+        if (child_pid == 0) {
             // Child process
-            if (i != 0) {
+            if (i > 0) {
                 // Redirect input from the previous pipe
-                if (dup2(pipes[i - 1][0], STDIN_FILENO) == -1) {
-                    perror("Dup2 failed");
-                    return errno;
-                }
-                // Close unused pipe ends
+                dup2(pipes[i - 1][0], 0);
                 close(pipes[i - 1][0]);
-                close(pipes[i - 1][1]);
             }
 
-            if (i != num_cmds - 1) {
-                // Redirect output to the next pipe
-                if (dup2(pipes[i][1], STDOUT_FILENO) == -1) {
-                    perror("Dup2 failed");
-                    return errno;
-                }
-                // Close unused pipe ends
-                close(pipes[i][0]);
+            if (i < num_programs - 1) {
+                // Redirect output to the current pipe
+                dup2(pipes[i][1], 1);
                 close(pipes[i][1]);
             }
 
-            // Close all pipe ends in the child process
-            for (int j = 0; j < num_cmds - 1; j++) {
+            // Close all pipe file descriptors
+            for (int j = 0; j < num_programs - 1; j++) {
                 close(pipes[j][0]);
                 close(pipes[j][1]);
             }
 
-            // Execute the command
-            execlp(argv[i + 1], argv[i + 1], NULL);
-            perror("Exec failed");
-            return errno;
+            execlp(argv[i + 1], argv[i + 1], (char *)NULL);
+            perror("execlp");
+            exit(EXIT_FAILURE);
         }
     }
 
-    // Close all pipe ends in the parent process
-    for (int i = 0; i < num_cmds - 1; i++) {
+    // Close all pipe file descriptors in the parent process
+    for (int i = 0; i < num_programs - 1; i++) {
         close(pipes[i][0]);
         close(pipes[i][1]);
     }
 
     // Wait for all child processes to complete
-    for (int i = 0; i < num_cmds; i++) {
+    for (int i = 0; i < num_programs; i++) {
         wait(NULL);
     }
 
