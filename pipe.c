@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <errno.h>
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
@@ -49,9 +50,11 @@ int main(int argc, char *argv[]) {
                 close(pipes[j][1]);
             }
 
-            execlp(argv[i + 1], argv[i + 1], (char *)NULL);
-            perror("execlp");
-            exit(EXIT_FAILURE);
+            // Attempt to execute the program
+            if (execlp(argv[i + 1], argv[i + 1], (char *)NULL) == -1) {
+                fprintf(stderr, "Error: Failed to execute '%s'. Error code: %d\n", argv[i + 1], errno);
+                exit(EXIT_FAILURE);
+            }
         }
     }
 
