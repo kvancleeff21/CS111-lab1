@@ -5,8 +5,8 @@
 #include <sys/wait.h>
 
 int main(int argc, char *argv[]) {
-    if (argc < 3) {
-        fprintf(stderr, "Usage: %s program1 program2 [program3 ...]\n", argv[0]);
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s program1 [program2 ...]\n", argv[0]);
         exit(EXIT_FAILURE);
     }
 
