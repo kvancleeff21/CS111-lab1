@@ -52,8 +52,7 @@ int main(int argc, char *argv[]) {
 
             // Execute the program
             if (execlp(argv[i + 1], argv[i + 1], (char *)NULL) == -1) {
-                fprintf(stderr, "Error: Failed to execute '%s'. Error code: %d\n", argv[i + 1], errno);
-                exit(EXIT_FAILURE);
+                return(errno);
             }
         }
     }
