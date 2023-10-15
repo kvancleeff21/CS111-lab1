@@ -51,8 +51,9 @@ int main(int argc, char *argv[]) {
             }
 
             // Execute the program
-            if (execlp(argv[i + 1], argv[i + 1], (char *)NULL) == -1) {
-                return(errno);
+            if (execvp(argv[i + 1], &argv[i + 1]) == -1) {
+                fprintf(stderr, "Error: Failed to execute '%s'. Error code: %d\n", argv[i + 1], errno);
+                exit(EXIT_FAILURE);
             }
         }
     }
@@ -65,7 +66,12 @@ int main(int argc, char *argv[]) {
 
     // Wait for all child processes to complete
     for (int i = 0; i < num_programs; i++) {
-        wait(NULL);
+        int status;
+        wait(&status);
+        if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+            fprintf(stderr, "Error: Child process failed.\n");
+            exit(EXIT_FAILURE);
+        }
     }
 
     return 0;
