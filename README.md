@@ -2,16 +2,20 @@
 
 ## Pipe Up
 
-One sentence description
+pipe.c is a program that emulates the behavior of the pipe shell operator, allowing  programs to act as the input for the output of other programs. 
 
 ## Building
 
-Explain briefly how to build your program
+You can build my program by using the make command or when I was testing my program on vscode outside of the virtual machine, I used gcc to compile my program
+ex: gcc -o pipe pipe.c
 
 ## Running
 
-Show an example run of your program, using at least two additional arguments, and what to expect
+```
+./pipe ls cat wc would output 
+5 5 44 to the terminal
+```
 
 ## Cleaning up
 
-Explain briefly how to clean up all binary files
+Running make clean would clean up all binary files
